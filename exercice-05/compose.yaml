@@ -1,0 +1,31 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: exo05-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: exo05
+      MYSQL_USER: exo05user
+      MYSQL_PASSWORD: exo05pass
+    volumes:
+      - exo05-data:/var/lib/mysql
+    networks: [exo05-net]
+    # pas de "ports:" -> MySQL n'est pas exposé à l'hôte
+
+  adminer:
+    image: adminer
+    container_name: exo05-adminer
+    restart: always
+    ports:
+      - "8085:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    depends_on: [mysql]
+    networks: [exo05-net]
+
+networks:
+  exo05-net:
+
+volumes:
+  exo05-data:
