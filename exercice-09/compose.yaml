@@ -1,0 +1,55 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: exo09-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_USER: dogs
+      MYSQL_PASSWORD: dogspass
+    volumes:
+      - exo09-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    # pas de port publié : seules les APIs parlent à la base ; pour le dev local ajouter "3309:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-udogs", "-pdogspass"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [exo09-net]
+
+  logs-api:
+    build: ./logs-api
+    container_name: exo09-logs-api
+    environment:
+      DB_URL: jdbc:mysql://db:3306/logsdb
+      DB_USER: dogs
+      DB_PASSWORD: dogspass
+    ports:
+      - "8091:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [exo09-net]
+
+  crud-api:
+    build: ./crud-api
+    container_name: exo09-crud-api
+    environment:
+      DB_URL: jdbc:mysql://db:3306/dogsdb
+      DB_USER: dogs
+      DB_PASSWORD: dogspass
+      LOGS_API_URL: http://logs-api:8080/api/v1/logs
+    ports:
+      - "8092:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      logs-api:
+        condition: service_started
+    networks: [exo09-net]
+
+networks:
+  exo09-net:
+
+volumes:
+  exo09-data:
